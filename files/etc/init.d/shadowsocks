@@ -49,9 +49,16 @@ ss_start(){
         config_get local_port config 'local_port'
         config_get redir_port config 'redir_port'
 
-        [ "$addnconf" ] && CONFIG_FILE=$addnconf && echo "Use addnconf file" || create_config config && CONFIG_FILE=$DEFAULT_CONFIG_FILE
-        [ "$local_port" ] && service_start $PROXY_EXEC -c $CONFIG_FILE -l $local_port
-        [ "$redir_port" ] && service_start $REDIR_EXEC -c $CONFIG_FILE -l $redir_port
+        if [ $addnconf ] && [ -r "$addnconf" ]; then
+            CONFIG_FILE=$addnconf
+            echo "Use additional config file \"$CONFIG_FILE\""
+        else
+            create_config config
+            CONFIG_FILE=$DEFAULT_CONFIG_FILE
+        fi;
+
+        [ "$local_port" ] && service_start $PROXY_EXEC -c $CONFIG_FILE -l $local_port && echo "ss-local running"
+        [ "$redir_port" ] && service_start $REDIR_EXEC -c $CONFIG_FILE -l $redir_port && echo "ss-redir running"
 
     fi;
 }
@@ -67,7 +74,4 @@ start() {
 stop() {
     service_stop /usr/bin/ss-local
     service_stop /usr/bin/ss-redir
-    killall -9 ss-redir >/dev/null
-    killall -9 ss-local >/dev/null
-    echo "Stop shadowsocks"
 }
